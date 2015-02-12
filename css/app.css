@@ -1,0 +1,76 @@
+html {
+	box-sizing: border-box;
+}
+
+*,
+*:before,
+*:after {
+	box-sizing: inherit;
+}
+
+body {
+	margin: 8px;
+}
+
+button {
+	-webkit-appearance: none;
+	border: none;
+	outline: none;
+	background: transparent;
+	vertical-align: top;
+}
+
+#main {
+	display: inline-block;
+	vertical-align: top;
+	background: #dcdcdc;
+	border: 4px solid #696969;
+}
+
+menu {
+	margin: 8px;
+}
+
+#secondary {
+	float: left;
+}
+
+#casino {
+	float: left;
+	background: url(/images/tile1.gif) left top;
+}
+
+.items button {
+	width: 32px;
+	height: 32px;
+	background: url(/images/tile1.gif) no-repeat left top;
+}
+
+.items button.empty {
+}
+
+/* States */
+
+.items button.selected {
+	border: 1px solid #9ecaed;
+	box-shadow: inset 0 0 10px #9ecaed;
+}
+
+.items button.disabled {
+	opacity: .5;
+}
+
+/* Items */
+
+.items button.slot_machine {
+	background-image: url(/images/slot_machine.gif);
+}
+
+.items button.generator {
+	background-image: url(/images/generator.gif);
+}
+
+.items button.vault {
+	background-image: url(/images/vault.gif);
+}
+
