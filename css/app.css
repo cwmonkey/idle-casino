@@ -18,6 +18,7 @@ button {
 	outline: none;
 	background: transparent;
 	vertical-align: top;
+	cursor: pointer;
 }
 
 #main {
@@ -25,6 +26,7 @@ button {
 	vertical-align: top;
 	background: #dcdcdc;
 	border: 4px solid #696969;
+	width: 840px;
 }
 
 menu {
@@ -33,11 +35,16 @@ menu {
 
 #secondary {
 	float: left;
+	width: 176px;
+}
+
+#items {
 }
 
 #casino {
 	float: left;
 	background: url(/images/tile1.gif) left top;
+	width: 640px;
 }
 
 .items button {
@@ -56,6 +63,16 @@ menu {
 	box-shadow: inset 0 0 10px #9ecaed;
 }
 
+.items button.engineering {
+	border: 1px solid red;
+	box-shadow: inset 0 0 10px red;
+}
+
+.items button.janitoring {
+	border: 1px solid blue;
+	box-shadow: inset 0 0 10px blue;
+}
+
 .items button.disabled {
 	opacity: .5;
 }
@@ -72,5 +89,21 @@ menu {
 
 .items button.vault {
 	background-image: url(/images/vault.gif);
+}
+
+.items button.carpet_updown {
+	background-image: url(/images/carpet_updown.gif);
+}
+
+.items button.carpet_leftright {
+	background-image: url(/images/carpet_leftright.gif);
+}
+
+.items button.janitor_closet {
+	background-image: url(/images/janitor_closet.gif);
+}
+
+.items button.engineer_room {
+	background-image: url(/images/engineer_room.gif);
 }
 
