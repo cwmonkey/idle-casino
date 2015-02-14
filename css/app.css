@@ -51,6 +51,18 @@ menu {
 	width: 32px;
 	height: 32px;
 	background: url(/images/tile1.gif) no-repeat left top;
+	text-shadow:
+		0 0 0 #fff,
+		-1px 0 0 #fff,
+		1px 0 0 #fff,
+		0 -1px 0 #fff,
+		0 1px 0 #fff,
+		-1px -1px 0 #fff,
+		1px -1px 0 #fff
+		;
+	text-align: right;
+	line-height: 46px;
+	font-weight: bold;
 }
 
 .items button.empty {
@@ -105,5 +117,21 @@ menu {
 
 .items button.engineer_room {
 	background-image: url(/images/engineer_room.gif);
+}
+
+.items button.shrub {
+	background-image: url(/images/shrub.gif);
+}
+
+.items button.changing_room {
+	background-image: url(/images/changing_room.gif);
+}
+
+.items button.bar {
+	background-image: url(/images/bar.gif);
+}
+
+.items button.wall {
+	background-image: url(/images/wall.gif);
 }
 

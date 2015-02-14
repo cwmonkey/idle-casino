@@ -9,7 +9,21 @@ var game_items = {
 		power_usage: 1,
 		break_chance: 0.01,
 		enforced: 50,
-		revenue: 5
+		revenue: 5,
+		patron_count: 1
+	},
+	bar: {
+		id: 'bar',
+		name: 'Bar',
+		type: 'machine',
+		description: 'Generates revenue from up to 5 willing patrons',
+		cost: 200,
+		prestige: 5,
+		power_usage: 2,
+		break_chance: 0.01,
+		enforced: 50,
+		revenue: 20,
+		patron_count: 5
 	},
 	generator: {
 		id: 'generator',
@@ -57,6 +71,33 @@ var game_items = {
 		boost_prestige_left: 2,
 		boost_prestige_right: 2
 	},
+	shrub: {
+		id: 'shrub',
+		name: 'Shrub',
+		type: 'furniture',
+		description: 'Adds prestige',
+		cost: 5,
+		break_chance: 0.01,
+		enforced: 50,
+		prestige: 1
+	},
+	wall: {
+		id: 'wall',
+		name: 'Wall',
+		description: 'Adds prestige',
+		cost: 10,
+		break_chance: 0,
+		prestige: 1
+	},
+	changing_room: {
+		id: 'changing_room',
+		name: 'Changing Room',
+		type: 'changing_room',
+		description: 'Allows you to hire waitresses',
+		cost: 10,
+		power_usage: 1,
+		waitresses: 3
+	},
 	janitor_closet: {
 		id: 'janitor_closet',
 		name: 'Janitor\'s Closet',
@@ -94,6 +135,7 @@ var $casino = document.getElementById('casino');
 var $items = document.getElementById('items');
 var $money = document.getElementById('money');
 var $power = document.getElementById('power');
+var $power_total = document.getElementById('power_total');
 var $vault = document.getElementById('vault');
 var $prestige = document.getElementById('prestige');
 var $janitors_max = document.getElementById('janitors_max');
@@ -104,6 +146,11 @@ var $engineers_max = document.getElementById('engineers_max');
 var $engineers = document.getElementById('engineers');
 var $engineer_add = document.getElementById('engineer_add');
 var $engineer_remove = document.getElementById('engineer_remove');
+var $waitresses = document.getElementById('waitresses');
+var $waitresses_max = document.getElementById('waitresses_max');
+var $waitress_add = document.getElementById('waitress_add');
+var $waitress_remove = document.getElementById('waitress_remove');
+var $patrons = document.getElementById('patrons');
 var janitoring_reg = / \( janitoring \)/;
 var janitoring_class = ' ( janitoring )';
 var engineering_reg = / \( engineering \)/;
@@ -120,17 +167,28 @@ var janitors_used;
 var engineers_used;
 var fix_required = 5;
 var no_power_threshold = 5;
+var patrons = 0;
+var patrons_used;
+var prestige_for_patron = 10;
+var patron_chance = 0.1;
+var waitress_prestige = 5;
+var drag_place = true;
+var drag_remove = true;
 
-var janitor_cost = 10;
-var engineer_cost = 50;
 var money = 1000;
 var power = 0;
 var prestige = 0;
+var vault = base_vault;
+
 var janitors_max = 0;
 var janitors = 0;
+var janitor_cost = 10;
 var engineers_max = 0;
 var engineers = 0;
-var vault = base_vault;
+var engineer_cost = 50;
+var waitresses_max = 0;
+var waitresses = 0;
+var waitress_cost = 20;
 
 // Update variables, I guess
 var update_info = function() {
@@ -139,6 +197,7 @@ var update_info = function() {
 	vault = base_vault;
 	janitors_max = 0;
 	engineers_max = 0;
+	waitresses_max = 0;
 
 	for ( i = 0; i < rows; i++ ) {
 		for ( j = 0; j < columns; j++ ) {
@@ -150,6 +209,10 @@ var update_info = function() {
 
 			if ( settings && settings.item_id ) {
 				var item = game_items[settings.item_id];
+
+				if ( item.patron_count ) {
+					settings.patron_count = item.patron_count;
+				}
 
 				if ( settings.durability ) {
 					if ( item.power_gen ) {
@@ -166,6 +229,10 @@ var update_info = function() {
 
 					if ( item.engineers ) {
 						engineers_max += item.engineers;
+					}
+
+					if ( item.waitresses ) {
+						waitresses_max += item.waitresses;
 					}
 
 					if ( item.prestige ) {
@@ -224,13 +291,22 @@ var update_info = function() {
 		engineers = engineers_max;
 	}
 
+	if ( waitresses > waitresses_max ) {
+		waitresses = waitresses_max;
+	}
+
+	prestige += waitresses * waitress_prestige;
+
 	$prestige.innerHTML = prestige;
 	$power.innerHTML = power;
+	$power_total.innerHTML = power;
 	$vault.innerHTML = vault;
 	$janitors_max.innerHTML = janitors_max;
 	$janitors.innerHTML = janitors;
 	$engineers_max.innerHTML = engineers_max;
 	$engineers.innerHTML = engineers;
+	$waitresses_max.innerHTML = waitresses_max;
+	$waitresses.innerHTML = waitresses;
 	info_updated = true;
 }
 
@@ -241,6 +317,7 @@ var do_item = function(settings, up, down, left, right) {
 	}
 
 	var item = game_items[settings.item_id];
+	var patron_count = '';
 
 	if ( item.type == 'janitor_closet' ) {
 		if ( item.power_usage > power && janitors ) {
@@ -260,36 +337,53 @@ var do_item = function(settings, up, down, left, right) {
 				$engineers.innerHTML = engineers;
 			}
 		}
+	} else if ( item.type == 'changing_room' ) {
+		if ( item.power_usage > power && waitresses ) {
+			settings.no_power_ticks++;
+			if ( settings.no_power_ticks == no_power_threshold ) {
+				settings.no_power_ticks = 0;
+				waitresses--;
+				$waitresses.innerHTML = waitresses;
+			}
+		}
 	} else if ( settings.durability && ( !item.power_usage || item.power_usage <= power ) ) {
 		if ( item.power_usage ) {
 			power -= item.power_usage;
 			$power.innerHTML = power;
 		}
 
-		var revenue = item.revenue || 0;
+		if ( settings.patron_count && patrons_used ) {
+			while ( settings.patron_count && patrons_used ) {
+				patrons_used--;
+				settings.patron_count--;
 
-		if ( revenue ) {
-			// If the vault is full, deduct 20% from revenue
-			if ( money >= vault ) {
-				revenue = Math.floor(revenue * .8);
+				var revenue = item.revenue || 0;
+
+				if ( revenue ) {
+					// If the vault is full, deduct 20% from revenue
+					if ( money >= vault ) {
+						revenue = Math.floor(revenue * .8);
+					}
+				}
+
+				money += revenue;
+			}
+
+			patron_count = item.patron_count - settings.patron_count;
+			$money.innerHTML = money;
+		} else {
+			if ( settings.enforced ) {
+				settings.enforced--;
+				settings.$element.title = item.name + ' (Enforced: ' + settings.enforced + ')';
+			} else if ( Math.random() < item.break_chance ) {
+				settings.durability = 0;
+				settings.$element.className += disabled_class;
+				settings.$element.title = item.name + ' (Broken down)';
+			} else {
+				settings.$element.title = item.name + ' (Breakdown Chance: ' + item.break_chance + ')';
 			}
 		}
-
-		money += revenue;
-		$money.innerHTML = money;
-		if ( settings.enforced ) {
-			settings.enforced--;
-			settings.$element.title = item.name + ' (Enforced: ' + settings.enforced + ')';
-		} else if ( Math.random() < item.break_chance ) {
-			settings.durability = 0;
-			settings.$element.className += disabled_class;
-			settings.$element.title = item.name + ' (Broken down)';
-		} else {
-			settings.$element.title = item.name + ' (Breakdown Chance: ' + item.break_chance + ')';
-		}
-	}
-
-	if ( item.type == 'furniture' && !settings.durability && janitors_used ) {
+	} else if ( item.type == 'furniture' && !settings.durability && janitors_used ) {
 		janitors_used--;
 		settings.fix++;
 
@@ -304,9 +398,7 @@ var do_item = function(settings, up, down, left, right) {
 		} else {
 			settings.$element.title = item.name + ' (Broken down, being fixed ' + settings.fix + '/' + fix_required;
 		}
-	}
-
-	if ( item.type == 'machine' && !settings.durability && engineers_used ) {
+	} else if ( item.type == 'machine' && !settings.durability && engineers_used ) {
 		engineers_used--;
 		settings.fix++;
 
@@ -316,11 +408,16 @@ var do_item = function(settings, up, down, left, right) {
 			settings.durability = 1;
 			settings.enforced = item.enforced;
 			settings.fix = 0;
+			settings.patron_count = item.patron_count;
 			settings.$element.className = settings.$element.className.replace(disabled_reg, '').replace(engineering_reg, '');
 			settings.$element.title = item.name + ' (Enforced: ' + settings.enforced + ')';
 		} else {
 			settings.$element.title = item.name + ' (Broken down, being fixed ' + settings.fix + '/' + fix_required;
 		}
+	}
+
+	if ( item.patron_count ) {
+		settings.$element.innerHTML = patron_count;
 	}
 };
 
@@ -331,6 +428,13 @@ var real_tick = function() {
 
 	janitors_used = janitors;
 	engineers_used = engineers;
+
+	if ( prestige > 0 ) {
+		patrons = Math.ceil(prestige / prestige_for_patron);
+		patrons += Math.floor((Math.random() * Math.floor(prestige / prestige_for_patron)) + 1);
+	}
+
+	patrons_used = patrons;
 
 	for ( i = 0; i < rows; i++ ) {
 		for ( j = 0; j < columns; j++ ) {
@@ -348,7 +452,9 @@ var real_tick = function() {
 
 	money -= janitors * janitor_cost;
 	money -= engineers * engineer_cost;
+	money -= waitresses * waitress_cost;
 	$money.innerHTML = money;
+	$patrons.innerHTML = patrons;
 	info_updated = false;
 };
 
@@ -381,7 +487,8 @@ for ( i = 0; i < rows; i++ ) {
 			durability: null,
 			enforced: null,
 			fix: 0,
-			no_power_ticks: 0
+			no_power_ticks: 0,
+			patron_count: 0
 		};
 
 		$element.className = 'empty';
@@ -430,9 +537,10 @@ $items.onclick = function(e) {
 	}
 };
 
-$casino.onclick = function(e) {
-	var $element = e.target;
+var left_mousedown = false;
+var right_mousedown = false;
 
+var place = function($element) {
 	if ( $element.tagName != 'BUTTON' ) return;
 
 	if ( !selected_item || $element._settings.item_id ) {
@@ -441,6 +549,7 @@ $casino.onclick = function(e) {
 		var item = game_items[$element._settings.item_id];
 		$element._settings.durability = 1;
 		$element._settings.fix = 0;
+		$element._settings.patron_count = selected_item.patron_count;
 		$element._settings.enforced = item.enforced;
 		$element.className = $element.className.replace(disabled_reg, '').replace(engineering_reg, '').replace(janitoring_reg, '');
 		
@@ -451,6 +560,7 @@ $casino.onclick = function(e) {
 
 	$element._settings.item_id = selected_item.id;
 	$element._settings.durability = 1;
+	$element._settings.patron_count = selected_item.patron_count;
 	$element._settings.enforced = selected_item.enforced;
 	money -= selected_item.cost;
 	$money.innerHTML = money;
@@ -459,15 +569,57 @@ $casino.onclick = function(e) {
 	update_info();
 };
 
-$casino.oncontextmenu = function(e) {
-	var $element = e.target;
-
+var remove = function($element) {
 	if ( $element.tagName != 'BUTTON' ) return;
 
 	$element._settings.item_id = null;
 
 	$element.className = $element.className.replace(casino_item_reg, '')
+};
 
+$casino.onmousedown = function(e) {
+	var $element = e.target;
+
+	if ( left_mousedown || right_mousedown ) {
+		return;
+	}
+
+	if ( event.which == 3 ) {
+		if ( drag_remove ) {
+			right_mousedown = true;
+		}
+
+		remove($element);
+	} else {
+		if ( drag_place ) {
+			left_mousedown = true;
+		}
+
+		place($element);
+	}
+};
+
+$casino.onmousemove = function(e) {
+	if ( left_mousedown ) {
+		var $element = e.target;
+
+		place($element);
+	} else if ( right_mousedown ) {
+		var $element = e.target;
+
+		remove($element);
+	}
+};
+
+document.body.onmouseup = function() {
+	left_mousedown = right_mousedown = false;
+};
+
+document.body.onmouseleave = function() {
+	left_mousedown = right_mousedown = false;
+};
+
+$casino.oncontextmenu = function(e) {
 	return false;
 };
 
@@ -498,6 +650,22 @@ $engineer_add.onclick = function() {
 $engineer_remove.onclick = function() {
 	if ( engineers ) {
 		engineers--;
+	}
+
+	update_info();
+};
+
+$waitress_add.onclick = function() {
+	if ( waitresses < waitresses_max ) {
+		waitresses++;
+	}
+
+	update_info();
+};
+
+$waitress_remove.onclick = function() {
+	if ( waitresses ) {
+		waitresses--;
 	}
 
 	update_info();
