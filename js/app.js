@@ -4,12 +4,12 @@ var game_items = {
 		name: 'Slot Machine',
 		type: 'machine',
 		description: 'Generates revenue from willing patrons',
-		cost: 100,
+		cost: 800,
 		prestige: 1,
 		power_usage: 1,
 		break_chance: 0.01,
 		enforced: 50,
-		revenue: 5,
+		revenue: 250,
 		patron_count: 1
 	},
 	bar: {
@@ -17,12 +17,12 @@ var game_items = {
 		name: 'Bar',
 		type: 'machine',
 		description: 'Generates revenue from up to 5 willing patrons',
-		cost: 200,
+		cost: 2000000,
 		prestige: 5,
 		power_usage: 2,
 		break_chance: 0.01,
 		enforced: 50,
-		revenue: 20,
+		revenue: 2500,
 		patron_count: 5
 	},
 	generator: {
@@ -41,20 +41,19 @@ var game_items = {
 		name: 'Vault',
 		type: 'machine',
 		description: 'Increases on-site money storage',
-		cost: 100,
+		cost: 100000,
 		power_usage: 1,
 		break_chance: 0.01,
 		enforced: 50,
-		vault: 1000
+		vault: 1000000
 	},
 	carpet_leftright: {
 		id: 'carpet_leftright',
 		name: 'Carpet - Left/Right',
 		type: 'furniture',
 		description: 'Doubles prestige of items above/below (does not stack)',
-		cost: 10,
-		break_chance: 0.01,
-		enforced: 50,
+		cost: 50,
+		dirty_chance: 0.01,
 		prestige: 1,
 		boost_prestige_up: 2,
 		boost_prestige_down: 2
@@ -64,9 +63,8 @@ var game_items = {
 		name: 'Carpet - Up/Down',
 		type: 'furniture',
 		description: 'Doubles prestige of items left/right (does not stack)',
-		cost: 10,
-		break_chance: 0.01,
-		enforced: 50,
+		cost: 50,
+		dirty_chance: 0.01,
 		prestige: 1,
 		boost_prestige_left: 2,
 		boost_prestige_right: 2
@@ -76,17 +74,15 @@ var game_items = {
 		name: 'Shrub',
 		type: 'furniture',
 		description: 'Adds prestige',
-		cost: 5,
-		break_chance: 0.01,
-		enforced: 50,
+		cost: 100,
+		dirty_chance: 0.01,
 		prestige: 1
 	},
 	wall: {
 		id: 'wall',
 		name: 'Wall',
 		description: 'Adds prestige',
-		cost: 10,
-		break_chance: 0,
+		cost: 500,
 		prestige: 1
 	},
 	changing_room: {
@@ -94,7 +90,7 @@ var game_items = {
 		name: 'Changing Room',
 		type: 'changing_room',
 		description: 'Allows you to hire waitresses',
-		cost: 10,
+		cost: 50000,
 		power_usage: 1,
 		waitresses: 3
 	},
@@ -103,7 +99,7 @@ var game_items = {
 		name: 'Janitor\'s Closet',
 		type: 'janitor_closet',
 		description: 'Allows you to hire janitors',
-		cost: 10,
+		cost: 10000,
 		power_usage: 1,
 		janitors: 1
 	},
@@ -112,7 +108,7 @@ var game_items = {
 		name: 'Engineering Room',
 		type: 'engineer_room',
 		description: 'Allows you to hire engineers',
-		cost: 50,
+		cost: 50000,
 		power_usage: 1,
 		engineers: 1
 	}
@@ -151,44 +147,55 @@ var $waitresses_max = document.getElementById('waitresses_max');
 var $waitress_add = document.getElementById('waitress_add');
 var $waitress_remove = document.getElementById('waitress_remove');
 var $patrons = document.getElementById('patrons');
-var janitoring_reg = / \( janitoring \)/;
-var janitoring_class = ' ( janitoring )';
-var engineering_reg = / \( engineering \)/;
-var engineering_class = ' ( engineering )';
+var janitoring_reg = / \( state_janitoring \)/;
+var janitoring_class = ' ( state_janitoring )';
+var engineering_reg = / \( state_engineering \)/;
+var engineering_class = ' ( state_engineering )';
 var selected_reg = / \( selected \)/;
 var selected_class = ' ( selected )';
-var disabled_reg = / \( disabled \)/;
-var disabled_class = ' ( disabled )';
+var broken_reg = / \( state_broken \)/;
+var broken_class = ' ( state_broken )';
+var dirty_reg = / \( state_dirty \)/;
+var dirty_class = ' ( state_dirty )';
+var state_reg = / \( state_[a-z_]+ \)/;
 var selected_item = null;
 var casino_item_reg = / \( [a-z_]+ \)/g;
 var info_updated = false;
-var base_vault = 1000;
-var janitors_used;
-var engineers_used;
+var base_vault = 1000000;
+var janitors_available;
+var engineers_available;
 var fix_required = 5;
+var cleaning_required = 5;
+
 var no_power_threshold = 5;
+var no_pay_threshold = 5;
+var quit_threshold = 8;
+var janitor_quit_reasons = 0;
+var engineer_quit_reasons = 0;
+var waitress_quit_reasons = 0;
+
 var patrons = 0;
-var patrons_used;
+var patrons_available;
 var prestige_for_patron = 10;
 var patron_chance = 0.1;
 var waitress_prestige = 5;
 var drag_place = true;
 var drag_remove = true;
 
-var money = 1000;
+var money = 1000000;
 var power = 0;
 var prestige = 0;
 var vault = base_vault;
 
 var janitors_max = 0;
 var janitors = 0;
-var janitor_cost = 10;
+var janitor_cost = 50;
 var engineers_max = 0;
 var engineers = 0;
-var engineer_cost = 50;
+var engineer_cost = 180;
 var waitresses_max = 0;
 var waitresses = 0;
-var waitress_cost = 20;
+var waitress_cost = 90;
 
 // Update variables, I guess
 var update_info = function() {
@@ -279,6 +286,10 @@ var update_info = function() {
 				} else if ( item.prestige ) {
 					prestige -= item.prestige;
 				}
+
+				if ( item.dirty_chance && !settings.clean && item.prestige ) {
+					prestige -= item.prestige;
+				}
 			}
 		}
 	}
@@ -321,40 +332,40 @@ var do_item = function(settings, up, down, left, right) {
 
 	if ( item.type == 'janitor_closet' ) {
 		if ( item.power_usage > power && janitors ) {
-			settings.no_power_ticks++;
-			if ( settings.no_power_ticks == no_power_threshold ) {
-				settings.no_power_ticks = 0;
+			janitor_quit_reasons++;
+			if ( janitor_quit_reasons == quit_threshold ) {
+				janitor_quit_reasons = 0;
 				janitors--;
 				$janitors.innerHTML = janitors;
 			}
 		}
 	} else if ( item.type == 'engineer_room' ) {
 		if ( item.power_usage > power && engineers ) {
-			settings.no_power_ticks++;
-			if ( settings.no_power_ticks == no_power_threshold ) {
-				settings.no_power_ticks = 0;
+			engineer_quit_reasons++;
+			if ( engineer_quit_reasons == quit_threshold ) {
+				engineer_quit_reasons = 0;
 				engineers--;
 				$engineers.innerHTML = engineers;
 			}
 		}
 	} else if ( item.type == 'changing_room' ) {
 		if ( item.power_usage > power && waitresses ) {
-			settings.no_power_ticks++;
-			if ( settings.no_power_ticks == no_power_threshold ) {
-				settings.no_power_ticks = 0;
+			waitress_quit_reasons++;
+			if ( waitress_quit_reasons == quit_threshold ) {
+				waitress_quit_reasons = 0;
 				waitresses--;
 				$waitresses.innerHTML = waitresses;
 			}
 		}
-	} else if ( settings.durability && ( !item.power_usage || item.power_usage <= power ) ) {
+	} else if ( item.break_chance && settings.durability && ( !item.power_usage || item.power_usage <= power ) ) {
 		if ( item.power_usage ) {
 			power -= item.power_usage;
 			$power.innerHTML = power;
 		}
 
-		if ( settings.patron_count && patrons_used ) {
-			while ( settings.patron_count && patrons_used ) {
-				patrons_used--;
+		if ( settings.patron_count && patrons_available ) {
+			while ( settings.patron_count && patrons_available ) {
+				patrons_available--;
 				settings.patron_count--;
 
 				var revenue = item.revenue || 0;
@@ -371,35 +382,32 @@ var do_item = function(settings, up, down, left, right) {
 
 			patron_count = item.patron_count - settings.patron_count;
 			$money.innerHTML = money;
-		} else {
+
+			var title = item.name;
+
 			if ( settings.enforced ) {
 				settings.enforced--;
-				settings.$element.title = item.name + ' (Enforced: ' + settings.enforced + ')';
-			} else if ( Math.random() < item.break_chance ) {
+				title += ' (Enforced: ' + settings.enforced + ')';
+			} else if ( item.break_chance && Math.random() < item.break_chance ) {
 				settings.durability = 0;
-				settings.$element.className += disabled_class;
-				settings.$element.title = item.name + ' (Broken down)';
-			} else {
-				settings.$element.title = item.name + ' (Breakdown Chance: ' + item.break_chance + ')';
+				settings.$element.className += broken_class;
+				title += ' (Broken down)';
+			} else if ( item.break_chance ) {
+				title += ' (Breakdown Chance: ' + item.break_chance + ')';
 			}
-		}
-	} else if ( item.type == 'furniture' && !settings.durability && janitors_used ) {
-		janitors_used--;
-		settings.fix++;
 
-		if ( settings.fix == 1 ) {
-			settings.$element.className += janitoring_class;
-		} else if ( settings.fix == fix_required ) {
-			settings.durability = 1;
-			settings.enforced = item.enforced;
-			settings.fix = 0;
-			settings.$element.className = settings.$element.className.replace(disabled_reg, '').replace(janitoring_reg, '');
-			settings.$element.title = item.name + ' (Enforced: ' + settings.enforced + ')';
-		} else {
-			settings.$element.title = item.name + ' (Broken down, being fixed ' + settings.fix + '/' + fix_required;
+			if ( item.dirty_chance && Math.random() < item.dirty_chance ) {
+				settings.clean = 0;
+				settings.$element.className += dirty_class;
+				title += ' (Dirty)';
+			} else if ( item.dirty_chance ) {
+				title += ' (Dirty Chance: ' + item.dirty_chance + ')';
+			}
+
+			settings.$element.title = title;
 		}
-	} else if ( item.type == 'machine' && !settings.durability && engineers_used ) {
-		engineers_used--;
+	} else if ( item.type == 'machine' && !settings.durability && engineers_available ) {
+		engineers_available--;
 		settings.fix++;
 
 		if ( settings.fix == 1 ) {
@@ -409,11 +417,31 @@ var do_item = function(settings, up, down, left, right) {
 			settings.enforced = item.enforced;
 			settings.fix = 0;
 			settings.patron_count = item.patron_count;
-			settings.$element.className = settings.$element.className.replace(disabled_reg, '').replace(engineering_reg, '');
+			settings.$element.className = settings.$element.className.replace(broken_reg, '').replace(engineering_reg, '');
 			settings.$element.title = item.name + ' (Enforced: ' + settings.enforced + ')';
 		} else {
 			settings.$element.title = item.name + ' (Broken down, being fixed ' + settings.fix + '/' + fix_required;
 		}
+	}
+
+	if ( item.dirty_chance && !settings.clean && janitors_available ) {
+		janitors_available--;
+		settings.cleaning++;
+
+		if ( settings.cleaning == 1 ) {
+			settings.$element.className += janitoring_class;
+		} else if ( settings.cleaning == cleaning_required ) {
+			settings.clean = 1;
+			settings.cleaning = 0;
+			settings.$element.className = settings.$element.className.replace(dirty_reg, '').replace(janitoring_reg, '');
+			settings.$element.title = item.name;
+		} else {
+			settings.$element.title = item.name + ' (Being cleaned ' + settings.cleaning + '/' + cleaning_required;
+		}
+	} else if ( item.dirty_chance && settings.clean && Math.random() < item.dirty_chance ) {
+		settings.clean = 0;
+		settings.$element.className += dirty_class;
+		title += ' (Dirty)';
 	}
 
 	if ( item.patron_count ) {
@@ -426,15 +454,15 @@ var real_tick = function() {
 		update_info();
 	}
 
-	janitors_used = janitors;
-	engineers_used = engineers;
+	janitors_available = janitors;
+	engineers_available = engineers;
 
 	if ( prestige > 0 ) {
 		patrons = Math.ceil(prestige / prestige_for_patron);
 		patrons += Math.floor((Math.random() * Math.floor(prestige / prestige_for_patron)) + 1);
 	}
 
-	patrons_used = patrons;
+	patrons_available = patrons;
 
 	for ( i = 0; i < rows; i++ ) {
 		for ( j = 0; j < columns; j++ ) {
@@ -450,9 +478,48 @@ var real_tick = function() {
 		}
 	}
 
-	money -= janitors * janitor_cost;
-	money -= engineers * engineer_cost;
-	money -= waitresses * waitress_cost;
+	for ( i = 0; i < janitors; i++ ) {
+		if ( money > vault * -1 ) {
+			money -= janitor_cost;
+		} else {
+			janitor_quit_reasons++;
+
+			if ( janitor_quit_reasons == quit_threshold ) {
+				janitor_quit_reasons = 0;
+				janitors--;
+				$janitors.innerHTML = janitors;
+			}
+		}
+	}
+
+	for ( i = 0; i < engineers; i++ ) {
+		if ( money > vault * -1 ) {
+			money -= engineer_cost;
+		} else {
+			engineer_quit_reasons++;
+
+			if ( engineer_quit_reasons == quit_threshold ) {
+				engineer_quit_reasons = 0;
+				engineers--;
+				$engineers.innerHTML = engineers;
+			}
+		}
+	}
+
+	for ( i = 0; i < waitresses; i++ ) {
+		if ( money > vault * -1 ) {
+			money -= waitress_cost;
+		} else {
+			waitress_quit_reasons++;
+
+			if ( waitress_quit_reasons == quit_threshold ) {
+				waitress_quit_reasons = 0;
+				waitresses--;
+				$waitresses.innerHTML = waitresses;
+			}
+		}
+	}
+
 	$money.innerHTML = money;
 	$patrons.innerHTML = patrons;
 	info_updated = false;
@@ -472,6 +539,16 @@ var tick = function() {
 	setTimeout(tick, 1000 / ticks_per_second);
 };
 
+var set_defaults = function($element) {
+	$element._settings.durability = 1;
+	$element._settings.clean = 1;
+	$element._settings.enforced = null;
+	$element._settings.fix = 0;
+	$element._settings.cleaning = 0;
+	$element._settings.no_power_ticks = 0;
+	$element._settings.patron_count = 0;
+};
+
 // Make rows
 for ( i = 0; i < rows; i++ ) {
 	var row = [];
@@ -481,18 +558,16 @@ for ( i = 0; i < rows; i++ ) {
 		var $element = document.createElement('button');
 		var settings = {
 			$element: $element,
-			row: i,
-			column: j,
 			item_id: null,
-			durability: null,
-			enforced: null,
-			fix: 0,
-			no_power_ticks: 0,
-			patron_count: 0
+			row: i,
+			column: j
 		};
 
 		$element.className = 'empty';
 		$element._settings = settings;
+
+		set_defaults($element);
+
 		row.push(settings);
 		$row.appendChild($element);
 	}
@@ -543,23 +618,30 @@ var right_mousedown = false;
 var place = function($element) {
 	if ( $element.tagName != 'BUTTON' ) return;
 
+	if ( money < vault * -1 ) return;
+
 	if ( !selected_item || $element._settings.item_id ) {
 		if ( !$element._settings.item_id ) return;
 
-		var item = game_items[$element._settings.item_id];
-		$element._settings.durability = 1;
-		$element._settings.fix = 0;
-		$element._settings.patron_count = selected_item.patron_count;
-		$element._settings.enforced = item.enforced;
-		$element.className = $element.className.replace(disabled_reg, '').replace(engineering_reg, '').replace(janitoring_reg, '');
-		
-		money -= item.cost / 2;
-		update_info();
+		// TODO make cleaning cheaper
+		if ( ($element._settings.break_chance && !$element._settings.durability) || ($element._settings.dirty_chance && !$element._settings.dirty) ) {
+			var item = game_items[$element._settings.item_id];
+			set_defaults($element);
+			$element._settings.patron_count = item.patron_count;
+			$element._settings.enforced = item.enforced;
+			$element.className = $element.className.replace(state_reg, '');
+			
+			money -= item.cost / 2;
+			update_info();
+		}
+
 		return;
 	};
 
+	if ( $element._settings.item_id ) return;
+
+	set_defaults($element);
 	$element._settings.item_id = selected_item.id;
-	$element._settings.durability = 1;
 	$element._settings.patron_count = selected_item.patron_count;
 	$element._settings.enforced = selected_item.enforced;
 	money -= selected_item.cost;
