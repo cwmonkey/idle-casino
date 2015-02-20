@@ -9,23 +9,75 @@
 <body>
 	<main id="main">
 		<section id="secondary">
-			<menu id="info">
+			<menu id="controls">
+				<button id="pause">Pause</button>
+			</menu>
+			<menu id="stats">
+				<h3 class="headline">Stats</h3>
 				<p title="If your money exceeds your vault size you will lose 20% of your incoming revenue">$<span id="money">0</span>/<span id="vault">0</span></p>
 				<p>Power: <span id="power">0</span>/<span id="power_total">0</span></p>
 				<p>Prestige: <span id="prestige">0</span></p>
 				<p>Patrons: <span id="patrons">0</span></p>
-				<p>
-					Janitors: <span id="janitors">0</span>/<span id="janitors_max">0</span>
-					<button id="janitor_add" title="Hire a janitor">+</button> <button id="janitor_remove" title="Fire a janitor">-</button>
-				</p>
-				<p>
-					Waitresses: <span id="waitresses">0</span>/<span id="waitresses_max">0</span>
-					<button id="waitress_add" title="Hire a waitress">+</button> <button id="waitress_remove" title="Fire a waitress">-</button>
-				</p>
-				<p>
-					Engineers: <span id="engineers">0</span>/<span id="engineers_max">0</span>
-					<button id="engineer_add" title="Hire an engineer">+</button> <button id="engineer_remove" title="Fire an engineer">-</button>
-				</p>
+			</menu>
+			<menu id="staff">
+				<h3 class="headline">Staff</h3>
+				<div class="item">
+					<p>
+						<span id="janitors">0</span>/<span id="janitors_max">0</span>
+						Janitors
+					</p>
+					<menu>
+						<button id="janitor_add" title="Hire a janitor">+</button> <button id="janitor_remove" title="Fire a janitor">-</button>
+					</menu>
+				</div>
+				<div class="item">
+					<p>
+						<span id="waitresses">0</span>/<span id="waitresses_max">0</span>
+						Waitresses
+					</p>
+					<menu>
+						<button id="waitress_add" title="Hire a waitress">+</button> <button id="waitress_remove" title="Fire a waitress">-</button>
+					</menu>
+				</div>
+				<div class="item">
+					<p>
+						<span id="engineers">0</span>/<span id="engineers_max">0</span>
+						Engineers
+					</p>
+					<menu>
+						<button id="engineer_add" title="Hire an engineer">+</button> <button id="engineer_remove" title="Fire an engineer">-</button>
+					</menu>
+				</div>
+			</menu>
+			<menu id="marketing">
+				<h3 class="headline">Marketing</h3>
+				<div class="item">
+					<p>
+						<span id="radio_ads">0</span>
+						Radio Ads
+					</p>
+					<menu>
+						<button id="radio_add" title="${cost} for {prestige} prestige per tick">+</button> <button id="radio_remove" title="Remove Ad">-</button>
+					</menu>
+				</div>
+				<div class="item">
+					<p>
+						<span id="billboard_ads">0</span>
+						Billboards
+					</p>
+					<menu>
+						<button id="billboard_add" title="${cost} for {prestige} prestige per tick">+</button> <button id="billboard_remove" title="Remove Ad">-</button>
+					</menu>
+				</div>
+				<div class="item">
+					<p>
+						<span id="tv_ads">0</span>
+						TV Ads
+					</p>
+					<menu>
+						<button id="tv_add" title="${cost} for {prestige} prestige per tick">+</button> <button id="tv_remove" title="Remove Ad">-</button>
+					</menu>
+				</div>
 			</menu>
 			<menu id="items" class="items">
 
