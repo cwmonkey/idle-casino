@@ -139,6 +139,7 @@ var $prestige = document.getElementById('prestige');
 var $patrons = document.getElementById('patrons');
 var $pause = document.getElementById('pause');
 var $main = document.getElementById('main');
+var $costs = document.getElementById('costs');
 var janitoring_reg = / \( state_janitoring \)/;
 var janitoring_class = ' ( state_janitoring )';
 var engineering_reg = / \( state_engineering \)/;
@@ -161,6 +162,7 @@ var engineers_available;
 var fix_required = 5;
 var cleaning_required = 5;
 var paused = true;
+var costs = 0;
 
 var no_power_threshold = 5;
 var no_pay_threshold = 5;
@@ -216,6 +218,9 @@ var staff = [
 		count: 0
 	}
 ];
+
+var janitors = staff[0];
+var engineers = staff[1];
 
 var ads = [
 	{
@@ -363,6 +368,7 @@ var update_info = function() {
 			if ( money > vault * -1 ) {
 				prestige += ad.prestige;
 				money -= ad.cost;
+				costs += ad.cost;
 			}
 		}
 
@@ -399,6 +405,15 @@ var do_item = function(settings, up, down, left, right) {
 				}
 			}
 		}
+	}
+
+	if (
+		item.tick_cost
+		&& ( !item.break_chance || ( item.break_chance && settings.durability ) )
+		&& ( !item.power_usage || item.power_usage <= power )
+	) {
+		money -= item.tick_cost;
+		costs += item.tick_cost;
 	}
 
 	if ( item.break_chance && settings.durability && ( !item.power_usage || item.power_usage <= power ) ) {
@@ -498,8 +513,9 @@ var real_tick = function() {
 		update_info();
 	}
 
-	janitors_available = janitors;
-	engineers_available = engineers;
+	costs = 0;
+	janitors_available = janitors.count;
+	engineers_available = engineers.count;
 
 	if ( prestige > 0 ) {
 		patrons = Math.ceil(prestige / prestige_for_patron);
@@ -516,6 +532,7 @@ var real_tick = function() {
 			var left = ( j ) ? casino_items[i][j - 1] : null;
 			var right = ( j < columns - 1 ) ? casino_items[i][j + 1] : null;
 			money -= rent_per_square;
+			costs += rent_per_square;
 
 			if ( settings ) {
 				do_item(settings, up, down, left, right);
@@ -526,9 +543,10 @@ var real_tick = function() {
 	for ( e = 0; e < staff.length; e++ ) {
 		var employee = staff[e];
 
-		for ( i = 0; i < janitors; i++ ) {
+		for ( i = 0; i < employee.count; i++ ) {
 			if ( money > vault * -1 ) {
 				money -= employee.cost;
+				costs += employee.cost;
 			} else {
 				employee.quit_reasons++;
 
@@ -536,12 +554,15 @@ var real_tick = function() {
 					employee.quit_reasons = 0;
 					employee.count--;
 					employee.$count.innerHTML = employee.count;
+				} else {
+					costs += employee.cost;
 				}
 			}
 		}
 	}
 
 	$money.innerHTML = money;
+	$costs.innerHTML = costs;
 	$patrons.innerHTML = patrons;
 	info_updated = false;
 };
