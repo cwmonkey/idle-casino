@@ -3,7 +3,7 @@ var game_items = {
 		id: 'slot_machine',
 		name: 'Slot Machine',
 		type: 'machine',
-		description: 'Generates revenue from willing patrons',
+		description: 'Generates revenue from willing patrons.',
 		cost: 800,
 		prestige: 1,
 		power_usage: 1,
@@ -16,7 +16,7 @@ var game_items = {
 		id: 'bar',
 		name: 'Bar',
 		type: 'machine',
-		description: 'Generates revenue from up to 5 willing patrons',
+		description: 'Generates revenue from up to 5 willing patrons.',
 		cost: 2000000,
 		prestige: 5,
 		power_usage: 2,
@@ -29,7 +29,7 @@ var game_items = {
 		id: 'generator',
 		name: 'Generator',
 		type: 'machine',
-		description: 'Generates power for electrical equipment',
+		description: 'Generates power for electrical equipment.',
 		cost: 100,
 		power_gen: 5,
 		break_chance: 0.01,
@@ -40,7 +40,7 @@ var game_items = {
 		id: 'vault',
 		name: 'Vault',
 		type: 'machine',
-		description: 'Increases on-site money storage',
+		description: 'Increases on-site money storage.',
 		cost: 100000,
 		power_usage: 1,
 		break_chance: 0.01,
@@ -51,7 +51,7 @@ var game_items = {
 		id: 'carpet_leftright',
 		name: 'Carpet - Left/Right',
 		type: 'furniture',
-		description: 'Doubles prestige of items above/below (does not stack)',
+		description: 'Doubles prestige of items above/below (does not stack).',
 		cost: 50,
 		dirty_chance: 0.005,
 		prestige: 1,
@@ -62,7 +62,7 @@ var game_items = {
 		id: 'carpet_updown',
 		name: 'Carpet - Up/Down',
 		type: 'furniture',
-		description: 'Doubles prestige of items left/right (does not stack)',
+		description: 'Doubles prestige of items left/right (does not stack).',
 		cost: 50,
 		dirty_chance: 0.005,
 		prestige: 1,
@@ -73,7 +73,7 @@ var game_items = {
 		id: 'shrub',
 		name: 'Shrub',
 		type: 'furniture',
-		description: 'Adds prestige',
+		description: 'Adds prestige.',
 		cost: 100,
 		dirty_chance: 0.01,
 		prestige: 1
@@ -81,7 +81,7 @@ var game_items = {
 	wall: {
 		id: 'wall',
 		name: 'Wall',
-		description: 'Adds prestige',
+		description: 'Adds prestige.',
 		cost: 500,
 		prestige: 1
 	},
@@ -89,7 +89,7 @@ var game_items = {
 		id: 'changing_room',
 		name: 'Changing Room',
 		type: 'changing_room',
-		description: 'Allows you to hire waitresses',
+		description: 'Allows you to hire waitresses.',
 		cost: 50000,
 		power_usage: 1,
 		waitresses: 3
@@ -98,7 +98,7 @@ var game_items = {
 		id: 'janitor_closet',
 		name: 'Janitor\'s Closet',
 		type: 'janitor_closet',
-		description: 'Allows you to hire janitors',
+		description: 'Allows you to hire janitors.',
 		cost: 10000,
 		power_usage: 1,
 		janitors: 1
@@ -107,7 +107,7 @@ var game_items = {
 		id: 'engineer_room',
 		name: 'Engineering Room',
 		type: 'engineer_room',
-		description: 'Allows you to hire engineers',
+		description: 'Allows you to hire engineers.',
 		cost: 50000,
 		power_usage: 1,
 		engineers: 1
@@ -140,6 +140,7 @@ var $patrons = document.getElementById('patrons');
 var $pause = document.getElementById('pause');
 var $main = document.getElementById('main');
 var $costs = document.getElementById('costs');
+var $level = document.getElementById('level');
 var janitoring_reg = / \( state_janitoring \)/;
 var janitoring_class = ' ( state_janitoring )';
 var engineering_reg = / \( state_engineering \)/;
@@ -172,7 +173,6 @@ var patrons = 0;
 var patrons_available;
 var prestige_for_patron = 10;
 var patron_chance = 0.1;
-var waitress_prestige = 5;
 var drag_place = true;
 var drag_remove = true;
 
@@ -181,6 +181,14 @@ var power = 0;
 var prestige = 0;
 var vault = base_vault;
 var rent_per_square = 5;
+
+var level = 0;
+var next_level_prestige = 100;
+var prev_level_prestige = 0;
+var ticks_to_next_level = 5;
+var next_level_ticks = 0;
+var ticks_to_prev_level = 5;
+var prev_level_ticks = 0;
 
 // TODO: Put the "static" stuff elsewhere
 var staff = [
@@ -193,7 +201,10 @@ var staff = [
 		$max: null,
 		quit_reasons: 0,
 		max: 0,
-		count: 0
+		count: 0,
+		titleTpl: null,
+		$title_element: null,
+		prestige: null
 	},
 	{
 		singular: 'engineer',
@@ -204,7 +215,10 @@ var staff = [
 		$max: null,
 		quit_reasons: 0,
 		max: 0,
-		count: 0
+		count: 0,
+		titleTpl: null,
+		$title_element: null,
+		prestige: null
 	},
 	{
 		singular: 'waitress',
@@ -215,7 +229,10 @@ var staff = [
 		$max: null,
 		quit_reasons: 0,
 		max: 0,
-		count: 0
+		count: 0,
+		titleTpl: null,
+		$title_element: null,
+		prestige: 5
 	}
 ];
 
@@ -356,8 +373,8 @@ var update_info = function() {
 		employee.$max.innerHTML = employee.max;
 		employee.$count.innerHTML = employee.count;
 
-		if ( employee.singular == 'waitress' ) {
-			prestige += employee.count * waitress_prestige;
+		if ( employee.prestige ) {
+			prestige += employee.count * employee.prestige;
 		}
 	}
 
@@ -561,6 +578,29 @@ var real_tick = function() {
 		}
 	}
 
+	if ( prestige > next_level_prestige ) {
+		prev_level_ticks = 0;
+
+		if ( next_level_ticks++ > ticks_to_next_level ) {
+			level++;
+			prev_level_prestige = next_level_prestige;
+			next_level_prestige += 100;
+			$level.innerHTML = level;
+		}
+	} else if ( prestige < prev_level_prestige ) {
+		next_level_ticks = 0;
+
+		if ( prev_level_ticks++ > ticks_to_prev_level ) {
+			level--;
+			next_level_prestige -= 100;
+			prev_level_prestige -= 100;
+			$level.innerHTML = level;
+		}
+	} else {
+		prev_level_ticks = 0;
+		next_level_ticks = 0;
+	}
+
 	$money.innerHTML = money;
 	$costs.innerHTML = costs;
 	$patrons.innerHTML = patrons;
@@ -626,7 +666,14 @@ for ( var prop in game_items ) {
 		var item = game_items[prop];
 		var $element = document.createElement('button');
 		$element.className = item.id;
-		$element.title = item.name + ' - ' + item.description;
+		$element.title = item.name
+			+ ' - '
+			+ item.description
+			+ (( item.prestige )?' Prestige: ' + item.prestige + '.':'')
+			+ (( item.vault )?' Vault storage: ' + item.vault + '.':'')
+			+ ' Cost: $' + item.cost
+			+ (( item.tick_cost )?' ($' + item.tick_cost + ' per tick).':'')
+			;
 		$items.appendChild($element);
 		$element._item = item;
 	}
@@ -699,6 +746,7 @@ var remove = function($element) {
 	if ( $element.tagName != 'BUTTON' ) return;
 
 	$element._settings.item_id = null;
+	$element.innerHTML = '';
 
 	$element.className = $element.className.replace(casino_item_reg, '');
 };
@@ -766,6 +814,9 @@ for ( i = 0; i < staff.length; i++ ) {
 
 		employee.$count = document.getElementById(employee.plural);
 		employee.$max = document.getElementById(employee.plural + '_max');
+		employee.$title_element = document.getElementById(employee.singular + '_info');
+		employee.titleTpl = employee.$title_element.title;
+		employee.$title_element.title = employee.titleTpl.replace('{cost}', employee.cost).replace('{prestige}', employee.prestige);
 
 		employee.count = 0;
 		employee.max = 0;
@@ -795,7 +846,7 @@ for ( i = 0; i < ads.length; i++ ) {
 		var ad = ads[i];
 
 		ad.$count = document.getElementById(ad.name + '_ads');
-		ad.$title_element = document.getElementById(ad.name + '_add');
+		ad.$title_element = document.getElementById(ad.name + '_info');
 		ad.titleTpl = ad.$title_element.title;
 		ad.$title_element.title = ad.titleTpl.replace('{cost}', ad.cost).replace('{prestige}', ad.prestige);
 

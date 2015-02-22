@@ -18,12 +18,13 @@
 				<p>Costs: <span id="costs">0</span></p>
 				<p>Power: <span id="power">0</span>/<span id="power_total">0</span></p>
 				<p>Prestige: <span id="prestige">0</span></p>
+				<p>Level: <span id="level">0</span></p>
 				<p>Patrons: <span id="patrons">0</span></p>
 			</menu>
 			<menu id="staff">
 				<h3 class="headline">Staff</h3>
 				<div class="item">
-					<p>
+					<p id="janitor_info" title="Clean furniture and other items. Cost ${cost} per tick.">
 						<span id="janitors">0</span>/<span id="janitors_max">0</span>
 						Janitors
 					</p>
@@ -32,7 +33,7 @@
 					</menu>
 				</div>
 				<div class="item">
-					<p>
+					<p id="waitress_info" title="Serve drinks and raise prestige by {prestige}. Cost ${cost} per tick.">
 						<span id="waitresses">0</span>/<span id="waitresses_max">0</span>
 						Waitresses
 					</p>
@@ -41,42 +42,42 @@
 					</menu>
 				</div>
 				<div class="item">
-					<p>
+					<p id="engineer_info" title="Fix broken machinery. Cost ${cost} per tick.">
 						<span id="engineers">0</span>/<span id="engineers_max">0</span>
-						Engineers
+						Technicians
 					</p>
 					<menu>
-						<button id="engineer_add" title="Hire an engineer">+</button> <button id="engineer_remove" title="Fire an engineer">-</button>
+						<button id="engineer_add" title="Hire a technician">+</button> <button id="engineer_remove" title="Fire a technician">-</button>
 					</menu>
 				</div>
 			</menu>
 			<menu id="marketing">
 				<h3 class="headline">Marketing</h3>
 				<div class="item">
-					<p>
+					<p id="radio_info" title="${cost} for {prestige} prestige per tick">
 						<span id="radio_ads">0</span>
 						Radio Ads
 					</p>
 					<menu>
-						<button id="radio_add" title="${cost} for {prestige} prestige per tick">+</button> <button id="radio_remove" title="Remove Ad">-</button>
+						<button id="radio_add" title="Purchase Ad">+</button> <button id="radio_remove" title="Remove Ad">-</button>
 					</menu>
 				</div>
 				<div class="item">
-					<p>
+					<p id="billboard_info" title="${cost} for {prestige} prestige per tick">
 						<span id="billboard_ads">0</span>
 						Billboards
 					</p>
 					<menu>
-						<button id="billboard_add" title="${cost} for {prestige} prestige per tick">+</button> <button id="billboard_remove" title="Remove Ad">-</button>
+						<button id="billboard_add" title="Purchase Ad">+</button> <button id="billboard_remove" title="Remove Ad">-</button>
 					</menu>
 				</div>
 				<div class="item">
-					<p>
+					<p id="tv_info" title="${cost} for {prestige} prestige per tick">
 						<span id="tv_ads">0</span>
 						TV Ads
 					</p>
 					<menu>
-						<button id="tv_add" title="${cost} for {prestige} prestige per tick">+</button> <button id="tv_remove" title="Remove Ad">-</button>
+						<button id="tv_add" title="Purchase Ad">+</button> <button id="tv_remove" title="Remove Ad">-</button>
 					</menu>
 				</div>
 			</menu>
